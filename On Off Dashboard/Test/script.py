@@ -112,27 +112,34 @@ def calculate_total_cost(df):
 def calculate_average_lead_time(df):
     """
     Calculates the average lead time in days based on 'travel_date' and 'booking_date' columns.
-    Lead time is calculated as (travel_date - booking_date).
+    Lead time is calculated as (travel_date - booking_date) with both date and time components.
 
     Args:
     df (DataFrame): DataFrame containing 'travel_date' and 'booking_date' columns.
 
     Returns:
-    float: The average lead time in days.
+    float: The average lead time in days, rounded to the nearest whole number.
     """
-    # Convert 'travel_date' and 'booking_date' to datetime format
-    df.loc[:, 'travel_date'] = pd.to_datetime(df['travel_date'], errors='coerce')
-    df.loc[:, 'booking_date'] = pd.to_datetime(df['booking_date'], errors='coerce')
+    # Create a copy of the DataFrame to avoid SettingWithCopyWarning
+    df = df.copy()
 
-    # Calculate lead time in days using .loc to avoid SettingWithCopyWarning
-    df.loc[:, 'lead_time_days'] = (df['travel_date'] - df['booking_date']).dt.total_seconds() / (24 * 60 * 60)
+    # Convert 'travel_date' and 'booking_date' to datetime format without removing time component
+    df['travel_date'] = pd.to_datetime(df['travel_date'].dt.date, errors='coerce')
+    df['booking_date'] = pd.to_datetime(df['booking_date'].dt.date, errors='coerce')
 
-    # Filter out NaN values in lead_time_days
+    # Calculate lead time in days
+    lead_time = df['lead_time_days'] = (df['travel_date'] - df['booking_date']).dt.total_seconds() / (24 * 60 * 60)
+
+    # Filter out any rows with NaN values in lead_time_days
     valid_lead_times = df['lead_time_days'].dropna()
 
-    # Calculate the average lead time
-    average_lead_time = valid_lead_times.mean()
+    # Calculate the average lead time and round it
+    average_lead_time = round(valid_lead_times.mean())
 
+    # print(f"df['travel_date']: {df['travel_date']}")
+    # print(f"df['booking_date']: {df['booking_date']}")
+    # print(f"lead_time: {lead_time}")
+    # print(f"valid_lead_times: {valid_lead_times}")
     print(f"Average Lead Time in Days: {average_lead_time}")
     return average_lead_time
 
@@ -193,7 +200,7 @@ def main():
     print(f"Total Cost with Date Filter On/Off dashboard: {formatted_total}")
 
     # Average Lead Time (Days)
-    average_lead_time = calculate_average_lead_time(date_filtered_df)
+    average_lead_time = calculate_average_lead_time(account_filtered_df)
     print(f"Average Lead Time (Days) On/Off dashboard: {average_lead_time}")
 
 # Execute the main function
